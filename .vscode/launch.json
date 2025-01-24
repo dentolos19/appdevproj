@@ -9,6 +9,13 @@
       "args": ["run", "--no-debugger", "--no-reload"],
       "env": {
         "FLASK_APP": "src/main.py",
+        "PATH": "${workspaceFolder}/venv/bin:${env:PATH}"
+      },
+      "windows": {
+        "env": {
+          "FLASK_APP": "src/main.py",
+          "PATH": "${workspaceFolder}\\venv\\Scripts;${env:PATH}"
+        }
       },
       "autoStartBrowser": true,
       "preLaunchTask": "setup"
@@ -22,6 +29,12 @@
       "env": {
         "FLASK_APP": "src/main.py",
         "FLASK_DEBUG": "1"
+      },
+      "windows": {
+        "env": {
+          "FLASK_APP": "src/main.py",
+          "FLASK_DEBUG": "1"
+        }
       },
       "jinja": true,
       "autoStartBrowser": true,

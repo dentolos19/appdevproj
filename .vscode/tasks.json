@@ -3,7 +3,11 @@
   "tasks": [
     {
       "label": "setup",
-      "command": "${workspaceFolder}/setup.bat",
+      "type": "shell",
+      "command": "${workspaceFolder}/setup.sh",
+      "windows": {
+        "command": "${workspaceFolder}/setup.bat"
+      },
       "presentation": {
         "reveal": "silent"
       }
