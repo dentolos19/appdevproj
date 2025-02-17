@@ -29,8 +29,11 @@ def tasks():
 
 
 @app.route("/engagement/tasks/<id>", methods=["GET", "POST"])
+@require_login
 def tasks_verify(id):
     task = sql.session.query(Task).filter_by(id=id).first()
+    user_id = session.get("user_id")
+    user = sql.session.query(User).filter_by(id=user_id).first()
 
     if request.method == "POST":
         # Collect data from the form
@@ -49,12 +52,52 @@ def tasks_verify(id):
 
         # Perform verification
         result = ai.analyze_image(prompt, path, return_json=True)
+        
+        print("Verification Result:", result)
+        print("Answer: " + str(result["answer"]))
+        print("Confidence: " + result["reasoning"])
+        
+        if result["answer"]:
+            # Check if verification is successful
+            if not user:
+                print("User not found!")  # Debugging
+                flash("User not found!", "danger")
+                return redirect(url_for("tasks_verify", id=id))
 
-        # TODO: Update the task status, add points, create transaction record
+            print("User Object:", user)  # Debugging
+            print("Task Points:", task.points)  # Debugging
+
+            task_points = task.points  # Get points from task model
+            task_name = task.name      # Get task name from task model
+
+            try:
+                user.points += task_points
+                sql.session.commit()
+                sql.session.refresh(user)  # Ensure changes are applied
+
+                # Log the transaction
+                new_transaction = Transaction(
+                    user_id=user_id,
+                    type=TransactionType.EARNED,
+                    amount=task_points,
+                    description=f"Points rewarded for verifying task: {task_name}.",
+                )
+                sql.session.add(new_transaction)
+                sql.session.commit()
+                sql.session.refresh(user)  # Ensure changes are applied
+
+                print(f"Points updated successfully! User now has {user.points} points.")  # Debugging
+                flash(f"Congratulations! You've earned {task_points} points for {task_name}.", "success")
+
+            except Exception as e:
+                sql.session.rollback()
+                print("Error while processing points:", str(e))  # Debugging
+                flash(f"An error occurred while processing points: {str(e)}", "danger")
 
         return render_template("tasks-verify-status.html", task=task, result=result)
 
     return render_template("tasks-verify.html", task=task)
+
 
 
 @app.route("/engagement/rewards")
@@ -177,7 +220,7 @@ def transactions():
 
     return render_template("transactions.html", transactions=user_transactions)
 
-
+#excel file as database
 @app.route("/transactions/export")
 def export_transactions():
     user_id = session.get("user_id")
@@ -219,7 +262,7 @@ def export_transactions():
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
-
+#dashboard at view transaction page
 @app.route("/transactions/dashboard")
 def dashboard():
     user_id = session.get("user_id")
@@ -231,14 +274,14 @@ def dashboard():
         .order_by(Transaction.created_at.asc())  # Ascending order for line graph
         .all()
     )
+
     # Check if there are transactions
     # has_transactions = bool(transactions)  # True if transactions exist, False if empty
-
     # If no transactions, just render the message without graphs
     # if not has_transactions:
     # return render_template("dashboard.html", has_transactions=False)
-
     # Convert transactions to DataFrame
+
     df = pd.DataFrame(
         [
             {

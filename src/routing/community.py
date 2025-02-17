@@ -2,7 +2,7 @@ from flask import flash, redirect, render_template, request, session, url_for
 
 from lib import storage
 from lib.database import sql
-from lib.models import Post, PostComment, PostLike, PostSaved, UserFollow
+from lib.models import Post, PostComment, PostLike, PostSaved, UserFollow, User
 from main import app
 from utils import require_login
 
@@ -41,9 +41,7 @@ def init_community():
 def community():
     user_id = session.get("user_id")
     posts = sql.session.query(Post).order_by(Post.created_at.desc()).all()
-    followings = sql.session.query(UserFollow).filter_by(follower_id=user_id).all()
-
-    return render_template("community.html", posts=posts, followings=followings)
+    return render_template("community.html", posts=posts)
 
 
 @app.route("/community/saved")
@@ -179,6 +177,26 @@ def toggle_save(post_id):
 
     # Redirect back to the community page (or wherever you want)
     return redirect(request.referrer)
+
+
+@app.route("/community/posts/<post_id>/share", methods=["GET", "POST"])
+def share_post(post_id):
+    user_id = session.get("user_id")  # Get the logged-in user's ID
+
+    if not user_id:
+        return redirect(url_for("login"))  # Ensure the user is logged in
+
+    # Get users that the logged-in user is following
+    followings = (
+        sql.session.query(User)
+        .join(UserFollow, UserFollow.user_id == User.id)
+        .filter(
+            UserFollow.follower_id == user_id
+        )  # Get users that the logged-in user follows
+        .all()
+    )
+
+    return render_template("share_modal.html", post_id=post_id, followings=followings)
 
 
 @app.route("/community/posts/<post_id>/comment", methods=["GET", "POST"])

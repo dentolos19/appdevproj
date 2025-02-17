@@ -98,39 +98,13 @@
         </div>
       </form>
 
-      <!-- Share Button -->
-      <form method="POST">
-        <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#shareModal">
+      <!-- Share -->
+      <form>
+        <button class="btn btn-primary" type="submit">
           <i class="fa-solid fa-share"></i>
           <span>{{ len(post.shares) }}</span>
         </button>
       </form>
-
-      <!-- Modal -->
-      <div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="shareModalLabel">Share Post</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-              <form method="POST">
-                <div class="form-group">
-                  <label for="recipient">Select User to Share With:</label>
-                  <select id="recipient" name="recipient_user_id" class="form-select" required>
-                    {% for follow in followings %}
-                    <option value="{{ follow.user.id }}">{{ follow.user.name }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-                <button type="submit" class="share-btn btn btn-primary">Share</button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
-
 
       <!-- Save -->
       <form method="post" action="{{ url_for('toggle_save', post_id=post.id) }}">
@@ -141,6 +115,13 @@
       </form>
     </div>
   </div>
+
+  {% for user in followings %}
+
+  <script>
+    console.log(AShare)
+  </script>
+  {% endfor %}
   {% endfor %}
 </div>
 

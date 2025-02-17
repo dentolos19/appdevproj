@@ -136,3 +136,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
+
+
+socket.on("message_restored", () =>  {
+  location.reload();
+})
