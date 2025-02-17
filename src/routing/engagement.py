@@ -454,7 +454,7 @@ def dashboard():
     )
 
 
-# api call for weather app
+# API weather
 @app.route("/weather", methods=["GET", "POST"])
 @require_login
 def weather():
@@ -465,7 +465,7 @@ def weather():
     if request.method == "POST":
         try:
             city = request.form.get("city")
-            #  OpenMeteo Geocoding API to fetch the coordinates so when user enter location automatically the coordinates are added
+            # OpenMeteo Geocoding API to fetch coordinates based on the user's input location
             geocoding_url = (
                 f"https://geocoding-api.open-meteo.com/v1/search?name={city}&count=1&language=en&format=json"
             )
@@ -475,12 +475,12 @@ def weather():
                 lat = location["results"][0]["latitude"]
                 lon = location["results"][0]["longitude"]
 
-                # Get weather data
+                # Get weather data, including precipitation probability
                 om = openmeteo_requests.Client()
                 params = {
                     "latitude": lat,
                     "longitude": lon,
-                    "hourly": ["temperature_2m", "precipitation", "wind_speed_10m"],
+                    "hourly": ["temperature_2m", "precipitation", "wind_speed_10m", "precipitation_probability"],
                     "current": ["temperature_2m", "relative_humidity_2m"],
                 }
 
@@ -490,6 +490,7 @@ def weather():
                 # Get current weather data
                 current = response.Current()
                 current_variables = list(map(lambda i: current.Variables(i), range(0, current.VariablesLength())))
+
                 current_temperature_2m = next(
                     filter(lambda x: x.Variable() == Variable.temperature and x.Altitude() == 2, current_variables)
                 )
@@ -499,10 +500,20 @@ def weather():
                     )
                 )
 
+                # Get hourly precipitation probability (chance of rain)
+                hourly = response.Hourly()
+                precipitation_probabilities = [
+                    hourly.Variables(i).Values(0) for i in range(hourly.VariablesLength()) if hourly.Variables(i).Variable() == Variable.precipitation_probability
+                ]
+
+                # Get the first value (current hour's rain probability)
+                chance_of_rain = precipitation_probabilities[0] if precipitation_probabilities else None
+
                 weather_data = {
                     "city": city,
                     "temperature": current_temperature_2m.Value(),
                     "humidity": current_relative_humidity_2m.Value(),
+                    "chance_of_rain": f"{chance_of_rain}%" if chance_of_rain is not None else "N/A",
                     "timezone": response.Timezone(),
                 }
 
@@ -514,6 +525,8 @@ def weather():
             flash(f"Error getting weather data: {str(e)}", "danger")
 
     return render_template("weather.html", user=user, weather=weather_data)
+
+
 
 
 #certain news 

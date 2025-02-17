@@ -4,8 +4,6 @@
 
 {% block body %}
 
-
-
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
@@ -28,7 +26,6 @@
                             Get Weather
                         </button>
                     </form>
-
                 </div>
             </div>
 
@@ -37,7 +34,8 @@
                 <div class="card-body">
                     <h2 class="text-center fw-bold mb-3">Weather in {{ weather.city }}</h2>
                     <div class="row">
-                        <div class="col-md-6">
+                        <!-- Temperature -->
+                        <div class="col-md-4">
                             <div class="p-4 rounded text-center bg-body-secondary">
                                 <p class="text-muted mb-1">Temperature</p>
                                 <h3 class="fw-bold">
@@ -45,10 +43,18 @@
                                 </h3>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <!-- Humidity -->
+                        <div class="col-md-4">
                             <div class="p-4 rounded text-center bg-body-secondary">
                                 <p class="text-muted mb-1">Humidity</p>
                                 <h3 class="fw-bold">{{ weather.humidity }}%</h3>
+                            </div>
+                        </div>
+                        <!-- Chance of Rain -->
+                        <div class="col-md-4">
+                            <div class="p-4 rounded text-center bg-body-secondary">
+                                <p class="text-muted mb-1">Chance of Rain</p>
+                                <h3 class="fw-bold">{{ weather.chance_of_rain }}</h3>
                             </div>
                         </div>
                     </div>
@@ -56,8 +62,8 @@
             </div>
             {% endif %}
 
-            
         </div>
     </div>
 </div>
+
 {% endblock %}
