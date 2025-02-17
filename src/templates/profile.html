@@ -1,63 +1,147 @@
 {% extends "base.html" %}
 
-{% block title %}Profile{% endblock %}
-
 {% block body %}
-
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-6 col-md-8 col-sm-12">
-            <!-- Profile Section -->
-            <div class="card shadow-lg p-4">
-                <div class="card-body">
-                    <h2 class="text-center mb-4">Your Profile</h2>
-                    <div class="list-group">
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <strong>Email:</strong>
-                            <span>{{ user.email }}</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <strong>Name:</strong>
-                            <span>{{ user.name }}</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <strong>Bio:</strong>
-                            <span>{{ user.bio }}</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <strong>Birthday:</strong>
-                            <span>{{ user.birthday }}</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <strong>Security Code:</strong>
-                            <span>{{ user.security }}</span>
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-center mt-4">
-                        <a href="/edit_profile" class="btn btn-success btn-lg w-100">Edit Profile</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="my-4">
-                <h3 class="text-center my-3">Your Upcoming Events</h3>
-                {% for event in events %}
-                <div class="card my-3">
-                    <div class="card-body">
-                        <h4 class="card-title mb-3">{{ event.title }}</h4>
-                        {% if event.image_url %}
-                        <img src="{{ event.image_url }}" class="card-img-top mb-3" style="height: 300px; width: 100%; object-fit: cover;" alt="Event Image">
-                        {% endif %}
-                        <p><strong>Location:</strong> {{ event.location }}</p>
-                        <p><strong>Date:</strong> {{ event.date }}</p>
-                    </div>
-                </div>
-                {% else %}
-                <p class="text-center">You haven't signed up for any events yet.</p>
-                {% endfor %}
-            </div>
-        </div>
+<div class="container-fluid py-3 d-flex gap-2">
+  <div class="card" style="width: 40%;">
+    <div class="card-body d-flex justify-content-between align-items-center">
+      <div>
+        <h4 class="card-title m-0">Profile</h4>
+      </div>
+      {% if editable %}
+      <form method="get" action="{{ url_for('profile_edit') }}">
+        <button class="btn btn-primary" type="submit">Edit Profile</button>
+      </form>
+      {% else %}
+      <form method="post" action="{{ url_for('profile_other', id=user.id) }}">
+        {% if following %}
+        <button class="btn btn-danger" type="submit">
+          Unfollow
+        </button>
+        {% else %}
+        <button class="btn btn-primary" type="submit">
+          Follow
+        </button>
+        {% endif %}
+      </form>
+      {% endif %}
     </div>
+    <div class="list-group list-group-flush">
+      <div class="list-group-item py-3">
+        <h6>Name</h6>
+        <p class="m-0">{{ user.name }}</p>
+      </div>
+      <div class="list-group-item py-3">
+        <h6>Email</h6>
+        <p class="m-0">{{ user.email }}</p>
+      </div>
+      <div class="list-group-item py-3">
+        <h6>Bio</h6>
+        <p class="m-0">{{ user.bio }}</p>
+      </div>
+      <div class="list-group-item py-3">
+        <h6>Birthday</h6>
+        <p class="m-0">{{ user.birthday }}</p>
+      </div>
+      <div class="list-group-item py-3">
+        <h6>Security Code</h6>
+        <p class="m-0">{{ user.security }}</p>
+      </div>
+    </div>
+  </div>
+  <div class="flex-fill d-flex flex-column gap-2">
+    <div class="d-flex gap-2">
+      <a class="card flex-fill" style="text-decoration: none;" href="{{ url_for('profile_followers', id=user.id) }}">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div style="width: 50px; height: 50px;">
+            <img class="img-fluid" src="{{ static('img/users.png') }}" />
+          </div>
+          <div class="flex-fill text-end">
+            <h5 class="m-0">
+              {{ followers }}
+            </h5>
+            <p class="m-0">Followers</p>
+          </div>
+        </div>
+      </a>
+      <a class="card flex-fill" style="text-decoration: none;" href="{{ url_for('profile_followings', id=user.id) }}">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div style="width: 50px; height: 50px;">
+            <img class="img-fluid" src="{{ static('img/users.png') }}" />
+          </div>
+          <div class="flex-fill text-end">
+            <h5 class="m-0">
+              {{ followings }}
+            </h5>
+            <p class="m-0">Followings</p>
+          </div>
+        </div>
+      </a>
+      <div class="card flex-fill">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div style="width: 50px; height: 50px;">
+            <img class="img-fluid" src="{{ static('img/transaction.png') }}" />
+          </div>
+          <div class="flex-fill text-end">
+            <h5 class="m-0">
+              {{ transactions }}
+            </h5>
+            <p class="m-0">Transactions</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <h5 class="m-0 card-title">Attendings</h5>
+        <p class="card-text">{{ len(attendings) }}</p>
+      </div>
+      <div class="list-group list-group-flush">
+        {% if attendings %}
+        {% for attending in attendings %}
+        <div class="list-group-item py-3 d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="m-0">{{ attending.event.title }}</h6>
+            <p class="m-0 text-muted">Signed up on {{ attending.created_at.strftime('%B %d, %Y') }}</p>
+          </div>
+          <div class="btn-group">
+            <a class="btn btn-primary" href="{{ url_for('admin_events_manage', id=attending.event.id) }}">View</a>
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="list-group-item">
+          <div class="py-2 d-flex justify-content-center align-items-center">
+            <p class="text-body-secondary m-0">No attendings found</p>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <h5 class="m-0 card-title">Posts</h5>
+        <p class="card-text">{{ len(posts) }}</p>
+      </div>
+      <div class="list-group list-group-flush">
+        {% if posts %}
+        {% for post in posts %}
+        <div class="list-group-item p-0 d-flex gap-2">
+          <img class="img-fluid" src="{{ post.image_url }}" style="height: 100px; aspect-ratio: 16 / 9; object-fit: cover;" />
+          <div class="flex-fill py-2 d-flex flex-column justify-content-center">
+            <h6 class="m-0">{{ post.content }}</h6>
+            <p class="m-0 text-muted">Posted on {{ post.created_at.strftime('%B %d, %Y') }}</p>
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="list-group-item">
+          <div class="py-2 d-flex justify-content-center align-items-center">
+            <p class="text-body-secondary m-0">No posts found</p>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
 </div>
-
 {% endblock %}

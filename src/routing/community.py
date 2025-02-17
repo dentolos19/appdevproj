@@ -2,7 +2,7 @@ from flask import flash, redirect, render_template, request, session, url_for
 
 from lib import storage
 from lib.database import sql
-from lib.models import Post, PostComment, PostLike, PostSaved, UserFollow
+from lib.models import Post, PostComment, PostLike, PostSaved, User, UserFollow
 from main import app
 from utils import require_login
 
@@ -31,7 +31,16 @@ def init_community():
 @require_login
 def community():
     posts = sql.session.query(Post).order_by(Post.created_at.desc()).all()
-    return render_template("community.html", posts=posts)
+    # users = sql.session.query(UserFollow).all()
+    # users = sql.session.query(User).join(UserFollow, UserFollow.user_id == User.id).filter(UserFollow.follower_id == session["user_id"]).all()
+    session["user_id"]
+    users = (
+        sql.session.query(User)
+        .join(UserFollow, User.id == UserFollow.user_id)
+        .filter(UserFollow.follower_id == session["user_id"])
+        .all()
+    )
+    return render_template("community.html", posts=posts, users = users)
 
 
 @app.route("/community/saved")
@@ -52,11 +61,12 @@ def community_post():
 
         image_url = None
 
-        if image and storage.check_format(image, storage.media_extensions):
-            image_url = storage.upload_file(image)
-        else:
-            flash("Not allowed")
-            return redirect(url_for("community_post"))
+        if image:
+            if storage.check_format(image, storage.media_extensions):
+                image_url = storage.upload_file(image)
+            else:
+                flash("Not allowed")
+                return redirect(url_for("community_post"))
 
         post = Post(
             user_id=user_id,
@@ -81,9 +91,13 @@ def community_edit(id):
         post.content = request.form["content"]
         image = request.files["image"]
 
-        if image and storage.check_format(image, storage.media_extensions):
-            image_url = storage.upload_file(image)
-            post.image_url = image_url
+        if image:
+            if storage.check_format(image, storage.media_extensions):
+                image_url = storage.upload_file(image)
+                post.image_url = image_url
+            else:
+                flash("Not allowed")
+                return redirect(url_for("community_edit", id=id))
 
         sql.session.commit()
 
@@ -153,6 +167,23 @@ def toggle_save(post_id):
 
     # Redirect back to the community page (or wherever you want)
     return redirect(request.referrer)
+
+@app.route("/community/posts/<post_id>/share", methods=["GET", "POST"])
+def share_post(post_id):
+    user_id = session.get("user_id")  # Get the logged-in user's ID
+
+    if not user_id:
+        return redirect(url_for("login"))  # Ensure the user is logged in
+
+    # Get users that the logged-in user is following
+    followings = (
+        sql.session.query(User)
+        .join(UserFollow, UserFollow.user_id == User.id)
+        .filter(UserFollow.follower_id == user_id)  # Get users that the logged-in user follows
+        .all()
+    )
+
+    return render_template("share_modal.html", post_id=post_id, followings=followings)
 
 
 @app.route("/community/posts/<post_id>/comment", methods=["GET", "POST"])

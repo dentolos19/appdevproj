@@ -10,7 +10,7 @@
             <div class="card shadow-lg p-4">
                 <div class="card-body">
                     <h2 class="text-center mb-4">Edit Your Profile</h2>
-                    <form method="POST" action="/edit_profile" onsubmit="return validateForm()">
+                    <form method="POST" action="{{ url_for('profile_edit') }}" onsubmit="return validateForm()">
                         <div class="form-group">
                             <label for="email" class="form-label">Email</label>
                             <input type="email" id="email" name="email" value="{{ user.email }}" required class="form-control mb-3">

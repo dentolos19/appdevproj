@@ -27,7 +27,7 @@
       {% else %}
       <form method="post" action="{{ url_for('toggle_follow', user_id=post.user_id) }}">
         <button class="follow-btn btn {{ 'btn-primary' if is_followed(post.user.followings, post.user_id, user_id) else 'btn-secondary' }}" type="button">
-          {{ 'Followed' if is_followed(post.user.followings, post.user_id, user_id) else 'Follow' }}
+          {{ 'Following' if is_followed(post.user.followings, post.user_id, user_id) else 'Follow' }}
         </button>
       </form>
       {% endif %}
@@ -94,13 +94,39 @@
         </div>
       </form>
 
-      <!-- Share -->
-      <form>
-        <button class="btn btn-primary" type="submit">
-          <i class="fa-solid fa-share"></i>
-          <span>{{ len(post.shares) }}</span>
-        </button>
-      </form>
+<!-- Share Button -->
+<form method="POST">
+  <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#shareModal">
+    <i class="fa-solid fa-share"></i>
+    <span>{{ len(post.shares) }}</span>
+  </button>
+</form>
+
+<!-- Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="shareModalLabel">Share Post</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form method="POST">
+          <div class="form-group">
+            <label for="recipient">Select User to Share With:</label>
+            <select id="recipient" name="recipient_user_id" class="form-select" required>
+              {% for user in followings %}
+                <option value="{{ user.id }}">{{ user.name }}</option>
+              {% endfor %}
+            </select>            
+          </div>
+          <button type="submit" class="btn btn-primary">Share</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 
       <!-- Save -->
       <form method="post" action="{{ url_for('toggle_save', post_id=post.id) }}">
@@ -111,6 +137,13 @@
       </form>
     </div>
   </div>
+
+  {% for user in followings %}
+
+<script>
+  console.log(AShare)
+</script>
+{% endfor %}
   {% endfor %}
 </div>
 

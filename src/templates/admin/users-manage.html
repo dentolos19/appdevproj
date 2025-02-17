@@ -5,8 +5,13 @@
   <div style="width: 40%;">
     <!-- User Information -->
     <div class="card">
-      <div class="card-body border-bottom">
-        <h5 class="m-0 card-title">User</h5>
+      <div class="card-body border-bottom d-flex justify-content-between align-items-center">
+        <div>
+          <h5 class="card-title m-0">User</h5>
+        </div>
+        <div>
+          <a class="btn btn-sm btn-primary" href="{{ url_for('profile_other', id=user.id) }}">View Profile</a>
+        </div>
       </div>
       <form class="card-body" method="POST" action="{{ url_for('admin_users_manage', id=user.id) }}">
         <div class="vstack gap-2">
@@ -47,6 +52,7 @@
         <p class="card-text">{{ len(attendings) }}</p>
       </div>
       <div class="list-group list-group-flush">
+        {% if attendings %}
         {% for attending in attendings %}
         <div class="list-group-item py-3 d-flex justify-content-between align-items-center">
           <div>
@@ -58,6 +64,13 @@
           </div>
         </div>
         {% endfor %}
+        {% else %}
+        <div class="list-group-item">
+          <div class="py-2 d-flex justify-content-center align-items-center">
+            <p class="text-body-secondary m-0">No attendings found</p>
+          </div>
+        </div>
+        {% endif %}
       </div>
     </div>
 
@@ -68,6 +81,7 @@
         <p class="card-text">{{ len(transactions) }}</p>
       </div>
       <div class="list-group list-group-flush">
+        {% if transactions %}
         {% for transaction in transactions %}
         <div class="list-group-item py-3 d-flex justify-content-between align-items-center">
           <div>
@@ -79,6 +93,13 @@
           </div>
         </div>
         {% endfor %}
+        {% else %}
+        <div class="list-group-item">
+          <div class="py-2 d-flex justify-content-center align-items-center">
+            <p class="text-body-secondary m-0">No transactions found</p>
+          </div>
+        </div>
+        {% endif %}
       </div>
     </div>
   </div>

@@ -1,42 +1,64 @@
 {% extends "admin/base.html" %}
 
 {% block abody %}
-<div class="container my-4">
-  <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center">
-    <h3 class="m-0">Users ({{ users.__len__() }})</h3>
-    <a class="btn btn-primary" href="{{ url_for('admin_users_new') }}">
-      New User
-    </a>
-  </div>
-
-  <!-- Items -->
-  <div class="mt-4 vstack gap-2">
-    {% for user in users %}
-    <div class="card">
-      <div class="card-body d-flex justify-content-between align-items-center">
-        <div>
-          <h5 class="card-title">{{ user.name }}</h5>
-          <p class="card-subtitle text-body-secondary">
-            <span>
-              <i class="fa-solid fa-envelope fa-sm"></i>
-              {{ user.email }}
-            </span>
-            <span class="mx-1">&bullet;</span>
-            <span>
-              <i class="fa-solid fa-gamepad fa-sm"></i>
-              {{ user.points }}
-            </span>
-          </p>
-        </div>
-        <div>
-          <a class="btn btn-primary" href="{{ url_for('admin_users_manage', id=user.id) }}">Manage</a>
-          <a class="btn btn-danger" href="{{ url_for('admin_users_delete', id=user.id) }}">Delete</a>
-        </div>
+<div class="container-fluid py-3">
+  <div class="card">
+    <!-- Header -->
+    <div class="card-body d-flex justify-content-between align-items-center">
+      <div>
+        <h4 class="card-title m-0">
+          <span>Users</span>
+          <span class="badge text-bg-secondary">{{ len(users) }}</span>
+        </h4>
+      </div>
+      <div class="d-flex gap-2">
+        <form method="get" action="{{ url_for('admin_users') }}">
+          <div class="input-group">
+            <input class="form-control" name="search" type="search" placeholder="Search" value="{{ search }}" />
+            <button class="btn btn-primary" type="submit">
+              <i class="fa-solid fa-search"></i>
+            </button>
+          </div>
+        </form>
+        <a class="btn btn-primary" href="{{ url_for('admin_users_new') }}">New User</a>
       </div>
     </div>
-    {% endfor %}
-  </div>
 
+    <!-- Content -->
+    <div class="list-group list-group-flush">
+      {% if users %}
+      {% for user in users %}
+      <div class="list-group-item">
+        <div class="py-2 d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="m-0">{{ user.name }}</h5>
+            <p class="text-body-secondary m-0">
+              <span>
+                <i class="fa-solid fa-envelope fa-sm"></i>
+                {{ user.email }}
+              </span>
+              <span class="mx-1">&bullet;</span>
+              <span>
+                <i class="fa-solid fa-gamepad fa-sm"></i>
+                {{ user.points }}
+              </span>
+            </p>
+          </div>
+          <div class="btn-group">
+            <a class="btn btn-primary" href="{{ url_for('admin_users_manage', id=user.id) }}">Manage</a>
+            <a class="btn btn-danger" href="{{ url_for('admin_users_delete', id=user.id) }}">Delete</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="list-group-item">
+        <div class="py-2 d-flex justify-content-center align-items-center">
+          <p class="text-body-secondary m-0">No users found</p>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
 </div>
 {% endblock %}

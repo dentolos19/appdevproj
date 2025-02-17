@@ -3,9 +3,9 @@
 {% block abody %}
 <div class="container d-flex justify-content-center align-items-center">
   <div class="my-4 card" style="width: 500px;">
-    <form class="card-body" method="POST" action="{{ url_for('admin_products_edit', id=product.id) }}" enctype="multipart/form-data">
+    <form class="card-body" method="POST" action="{{ url_for('admin_products_manage', id=product.id) }}" enctype="multipart/form-data">
       <div>
-        <h5 class="card-title text-center">Edit Product</h5>
+        <h5 class="card-title text-center">Manage Product</h5>
       </div>
       <div class="vstack gap-2">
         <div>

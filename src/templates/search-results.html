@@ -1,9 +1,5 @@
 {% extends "base.html" %}
 
-{% block styles %}
-<link rel="stylesheet" href="{{ static('css/messages.css') }}">
-{% endblock %}
-
 {% block title %}
 Search results
 {% endblock %}
@@ -13,12 +9,12 @@ Search results
   {% if messages %}
     <div class="list-group">
       {% for message in messages %}
-      <div class="message card bg-light text-dark rounded-3">
-        <div class="card-body">
-          <h5 class="card-title">{{ message.sender.name }}</h5>
-          <p class="card-text">{{message.message}}</p>
-        </div>
-      </div>
+          <div class="message card bg text rounded-3">
+            <div class="card-body">
+              <h5 class="card-title">{{ message.sender.name }}</h5>
+              <p class="card-text">{{message.message}}</p>
+            </div>
+          </div>
          {% endfor %}
     </div>
   {% else %}

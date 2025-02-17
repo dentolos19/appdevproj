@@ -40,7 +40,7 @@ function renderMessages() {
 
   // Render messages
   messages.forEach(({ role, content }) => {
-    const name = role === "bot" ? "Customer Service" : "You";
+    const name = role === "bot" ? "Eco Bot" : "You";
     const messageElement = createMessageElement(name, marked.parse(content));
     messagesElement.appendChild(messageElement);
   });

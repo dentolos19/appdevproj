@@ -14,8 +14,20 @@
     <!-- Desktop Menu -->
     <div id="navigation" class="navbar-collapse collapse">
       <!-- Navigation Items -->
-      <ul class="navbar-nav mx-auto">
+      <ul class="navbar-nav mx-auto gap-2">
         {% if is_logged_in %}
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('events') }}">Events</a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+            Community
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{{ url_for('community') }}">Explore</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('community_saved') }}">Saved</a></li>
+          </ul>
+        </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
             Engagement
@@ -28,20 +40,15 @@
         </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-            Community
+            Messaging
           </a>
           <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="{{ url_for('community') }}">Explore</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('community_saved') }}">Saved</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('messaging') }}">Messaging</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('messaging') }}">My Chat</a></li>
             <li><a class="dropdown-item" href="{{ url_for('deleted_messages') }}">Deleted Messages</a></li>
           </ul>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('events') }}">Events</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('chat') }}">Chat</a>
+          <a class="nav-link" href="{{ url_for('chat') }}">Help</a>
         </li>
         <li class="nav-item">
           

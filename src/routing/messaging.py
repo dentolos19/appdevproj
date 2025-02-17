@@ -91,8 +91,22 @@ def handle_send_message(data):
 @app.route("/community/messages/<receiver_id>", methods=["GET", "POST"])
 def search_messages():
     search_query = request.args.get("search_query")
-    valid_messages = (sql.session.query(Message).filter(and_(Message.message.like(f"%{search_query}%"), or_(Message.receiver_id == session["user_id"], Message.sender_id == session["user_id"]))).order_by(Message.created_at).limit(50).all())
     users = sql.session.query(User).all()
+    valid_messages = (
+    sql.session.query(Message)
+    .filter(Message.is_visible == True)
+    .filter(Message.message.like(f"%{search_query}%"))
+    .filter(
+        or_(
+            Message.receiver_id == session["user_id"],
+            Message.sender_id == session["user_id"]
+        )
+    )
+    .order_by(Message.created_at)
+    .limit(50)
+    .all()
+)
+
     return render_template("search-results.html", messages=valid_messages, users = users)
 
 @app.route("/community/messages", methods=["GET"])
@@ -128,4 +142,28 @@ def delete_message(receiver_id, message_id):
 
 @app.route("/community/messages/deleted")
 def deleted_messages():
-    pass
+    messages = sql.session.query(Message).filter(and_(Message.sender_id == session["user_id"], Message.is_visible != True))
+    for message in messages:
+        print(message.message)
+    return render_template("deleted_messages.html", messages = messages)
+
+
+@app.route("/community/messages/deleted/restore", methods=["POST"])
+def restore_message():
+    message_id = request.form.get("message_restoration")
+    if not message_id:
+        return "No message ID provided", 400  # Handle missing message ID
+
+    message = sql.session.query(Message).filter(
+        Message.id == message_id
+    ).first()
+
+    if not message:
+        return "Message not found", 404  # Handle missing message
+
+    message.is_visible = True
+    sql.session.commit()
+
+    socket.io.emit("message_restored")
+    return redirect(url_for("deleted_messages"))  # Redirect after restoring
+

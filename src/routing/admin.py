@@ -17,29 +17,18 @@ def admin():
     return render_template("admin/dashboard.html")
 
 
-@app.route("/admin/events", methods=["GET", "POST"])
+@app.route("/admin/events")
 @require_admin
 def admin_events():
-    # Query all events from the database
-    events = sql.session.query(Event).all()
+    search = request.args.get("search", "")
 
-    if request.method == "POST" and request.form.get("delete_event"):
-        # Handle deletion of event
-        event_id = request.form["delete_event"]
-        event_to_delete = sql.session.query(Event).filter_by(id=event_id).first()
+    events = (
+        sql.session.query(Event).filter(Event.title.ilike(f"%{search}%")).all()
+        if search
+        else sql.session.query(Event).all()
+    )
 
-        if event_to_delete:
-            try:
-                sql.session.delete(event_to_delete)
-                sql.session.commit()
-                flash("Event deleted successfully!", "success")
-            except Exception as e:
-                sql.session.rollback()  # Rollback in case of error
-                flash(f"An error occurred while deleting the event: {str(e)}", "danger")
-
-        return redirect(url_for("admin_events"))
-
-    return render_template("admin/events.html", events=events)
+    return render_template("admin/events.html", events=events, search=search)
 
 
 @app.route("/admin/events/new", methods=["GET", "POST"])
@@ -146,8 +135,15 @@ def admin_events_delete(id):
 @app.route("/admin/users")
 @require_admin
 def admin_users():
-    users = sql.session.query(User).all()
-    return render_template("admin/users.html", users=users)
+    search = request.args.get("search", "")
+
+    users = (
+        sql.session.query(User).filter(User.name.ilike(f"%{search}%")).all()
+        if search
+        else sql.session.query(User).all()
+    )
+
+    return render_template("admin/users.html", users=users, search=search)
 
 
 @app.route("/admin/users/new", methods=["GET", "POST"])
@@ -251,10 +247,15 @@ def admin_users_delete(id):
 @app.route("/admin/tasks")
 @require_admin
 def admin_tasks():
-    # Query all tasks from the database
-    tasks = sql.session.query(Task).all()
+    search = request.args.get("search", "")
 
-    return render_template("admin/tasks.html", tasks=tasks)
+    tasks = (
+        sql.session.query(Task).filter(Task.name.ilike(f"%{search}%")).all()
+        if search
+        else sql.session.query(Task).all()
+    )
+
+    return render_template("admin/tasks.html", tasks=tasks, search=search)
 
 
 @app.route("/admin/tasks/new", methods=["GET", "POST"])
@@ -377,10 +378,15 @@ def admin_tasks_delete(id):
 @app.route("/admin/products")
 @require_admin
 def admin_products():
-    # Query all products from the database
-    products = sql.session.query(Product).all()
+    search = request.args.get("search", "")
 
-    return render_template("admin/products.html", products=products)
+    products = (
+        sql.session.query(Product).filter(Product.name.ilike(f"%{search}%")).all()
+        if search
+        else sql.session.query(Product).all()
+    )
+
+    return render_template("admin/products.html", products=products, search=search)
 
 
 @app.route("/admin/products/new", methods=["GET", "POST"])
@@ -428,7 +434,7 @@ def admin_products_new():
 
 @app.route("/admin/products/<id>", methods=["GET", "POST"])
 @require_admin
-def admin_products_edit(id):
+def admin_products_manage(id):
     # Query the product from the database
     product = sql.session.query(Product).filter_by(id=id).first()
 
@@ -447,7 +453,7 @@ def admin_products_edit(id):
                 image_url = storage.upload_file(product_image)
             else:
                 flash("The file format is not allowed.", "danger")
-                return redirect(url_for("admin_products_edit", id=id))
+                return redirect(url_for("admin_products_manage", id=id))
 
         # Update the product object with the new data
         product.name = product_name
@@ -466,7 +472,7 @@ def admin_products_edit(id):
 
         return redirect(url_for("admin_products"))
 
-    return render_template("admin/products-edit.html", product=product)
+    return render_template("admin/products-manage.html", product=product)
 
 
 @app.route("/admin/products/<id>/delete", methods=["GET", "POST"])

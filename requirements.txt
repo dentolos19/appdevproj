@@ -21,6 +21,7 @@ docutils==0.21.2
 flask==3.1.0
 flask-socketio==5.5.1
 flask-sqlalchemy==3.1.1
+flatbuffers==24.3.25
 fonttools==4.56.0
 frozenlist==1.5.0
 google-auth==2.38.0
@@ -37,11 +38,16 @@ libsql-client==0.3.1
 markupsafe==3.0.2
 matplotlib==3.10.0
 multidict==6.1.0
+narwhals==1.26.0
+newsapi-python==0.2.7
 numpy==2.2.2
+openmeteo-requests==1.3.0
+openmeteo-sdk==1.18.6
 packaging==24.2
 pandas==2.2.3
 pillow==11.1.0
 pip==24.2
+plotly==6.0.0
 propcache==0.2.1
 pyasn1==0.6.1
 pyasn1-modules==0.4.1
@@ -58,6 +64,7 @@ python-socketio==5.12.1
 pytz==2025.1
 requests==2.32.3
 rsa==4.9
+seaborn==0.13.2
 sendgrid==6.11.0
 simple-websocket==1.1.0
 six==1.17.0

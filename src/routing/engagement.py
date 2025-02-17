@@ -1,10 +1,16 @@
 import io
 
 import matplotlib
+import openmeteo_requests
 import pandas as pd
+import plotly.express as px
+import plotly.io as pio
 import requests
 from flask import flash, redirect, render_template, request, send_file, session, url_for
+from newsapi import NewsApiClient
+from openmeteo_sdk.Variable import Variable
 from PIL import Image
+
 from lib import ai, storage
 from lib.database import sql
 from lib.enums import TransactionType
@@ -13,19 +19,16 @@ from main import app
 from utils import require_login
 
 matplotlib.use("Agg")
-import base64
 
-import matplotlib.pyplot as plt
+def is_valid_image(file):
+    try:
+        img = Image.open(io.BytesIO(file.read()))
+        img.verify()  # Verify it's an image
+        file.seek(0)  # Reset file pointer after reading
+        return True
+    except Exception:
+        return False
 
-
-import openmeteo_requests
-from openmeteo_sdk.Variable import Variable
-
-import seaborn as sns
-import plotly.express as px
-import plotly.io as pio
-
-from newsapi import NewsApiClient
 
 @app.route("/engagement/tasks")
 @require_login
@@ -36,21 +39,6 @@ def tasks():
 
     return render_template("tasks.html", user=user, tasks=tasks)
 
-ALLOWED_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif"} 
-
-def is_allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
-
-
-
-def is_valid_image(file):
-    try:
-        img = Image.open(io.BytesIO(file.read()))  
-        img.verify()  # Verify it's an image
-        file.seek(0)  # Reset file pointer after reading
-        return True
-    except Exception:
-        return False
 
 @app.route("/engagement/tasks/<id>", methods=["GET", "POST"])
 @require_login
@@ -68,7 +56,7 @@ def tasks_verify(id):
             flash("No image provided.", "danger")
             return redirect(request.url)
 
-        if not is_allowed_file(image.filename):
+        if not storage.check_format(image, storage.image_extensions):
             flash("Invalid file type! Only images (PNG, JPG, JPEG, GIF) are allowed.", "danger")
             return redirect(request.url)
 
@@ -85,11 +73,11 @@ def tasks_verify(id):
 
         # Perform verification
         result = ai.analyze_image(prompt, path, return_json=True)
-        
+
         print("Verification Result:", result)
         print("Answer: " + str(result["answer"]))
         print("Confidence: " + result["reasoning"])
-        
+
         if result["answer"]:
             if not user:
                 print("User not found!")  # Debugging
@@ -100,7 +88,7 @@ def tasks_verify(id):
             print("Task Points:", task.points)  # Debugging
 
             task_points = task.points  # Get points from task model
-            task_name = task.name      # Get task name from task model
+            task_name = task.name  # Get task name from task model
 
             try:
                 user.points += task_points
@@ -131,7 +119,6 @@ def tasks_verify(id):
     return render_template("tasks-verify.html", task=task)
 
 
-
 @app.route("/engagement/rewards")
 @require_login
 def rewards():
@@ -147,6 +134,7 @@ def points():
     user_id = session.get("user_id")
     user = sql.session.query(User).filter_by(id=user_id).first()
     return render_template("points.html", user=user)
+
 
 """
 @app.route("/engagement/points/add", methods=["POST"])
@@ -252,7 +240,8 @@ def transactions():
 
     return render_template("transactions.html", transactions=user_transactions)
 
-#excel file as database
+
+# excel file as database
 @app.route("/transactions/export")
 def export_transactions():
     user_id = session.get("user_id")
@@ -294,6 +283,8 @@ def export_transactions():
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
+
+# dashboard at view transaction page
 """#dashboard at view transaction page
 @app.route("/transactions/dashboard")
 def dashboard():
@@ -372,28 +363,30 @@ def dashboard():
         net_transactions=net_transactions,
     )
 """
+
+
 @app.route("/transactions/dashboard")
 @require_login
 def dashboard():
     user_id = session.get("user_id")
 
+    # api call for weather app
     # Fetch user transactions
     transactions = (
-        sql.session.query(Transaction)
-        .filter_by(user_id=user_id)
-        .order_by(Transaction.created_at.asc())
-        .all()
+        sql.session.query(Transaction).filter_by(user_id=user_id).order_by(Transaction.created_at.asc()).all()
     )
 
     # Convert transactions to DataFrame
-    df = pd.DataFrame([
-        {
-            "Date": transaction.created_at.strftime("%Y-%m-%d"),
-            "Type": transaction.type.value,
-            "Amount": transaction.amount,
-        }
-        for transaction in transactions
-    ])
+    df = pd.DataFrame(
+        [
+            {
+                "Date": transaction.created_at.strftime("%Y-%m-%d"),
+                "Type": transaction.type.value,
+                "Amount": transaction.amount,
+            }
+            for transaction in transactions
+        ]
+    )
 
     if df.empty:
         return "No data available for visualization.", 404
@@ -405,55 +398,48 @@ def dashboard():
 
     # Interactive Bar Chart
     bar_fig = px.bar(
-        df, 
-        x="Type", 
+        df,
+        x="Type",
         y="Amount",
         color="Type",
         title="Transaction Analysis by Type",
         color_discrete_map={"earned": "#28a745", "redemption": "#dc3545"},
-        labels={"Amount": "Points", "Type": "Transaction Type"}
+        labels={"Amount": "Points", "Type": "Transaction Type"},
     )
-    bar_fig.update_layout(
-        showlegend=False,
-        plot_bgcolor='white',
-        hovermode='x unified'
-    )
+    bar_fig.update_layout(showlegend=False, plot_bgcolor="white", hovermode="x unified")
     bar_chart_html = pio.to_html(bar_fig, full_html=False)
 
     # Interactive Line Chart
-    df_grouped = df.groupby('Date')['Amount'].sum().reset_index()
+    df_grouped = df.groupby("Date")["Amount"].sum().reset_index()
     line_fig = px.line(
         df_grouped,
         x="Date",
         y="Amount",
         title="Daily Points Activity",
         markers=True,
-        labels={"Amount": "Points", "Date": "Transaction Date"}
+        labels={"Amount": "Points", "Date": "Transaction Date"},
     )
-    line_fig.update_layout(
-        plot_bgcolor='white',
-        hovermode='x unified'
-    )
+    line_fig.update_layout(plot_bgcolor="white", hovermode="x unified")
     line_fig.update_traces(line_color="#0d6efd")
     line_chart_html = pio.to_html(line_fig, full_html=False)
 
     # Pie Chart for Transaction Distribution
     pie_fig = px.pie(
-        df, 
-        names="Type", 
+        df,
+        names="Type",
         values="Amount",
         title="Transaction Distribution",
         color="Type",
-        color_discrete_map={"earned": "#28a745", "redemption": "#dc3545"}
+        color_discrete_map={"earned": "#28a745", "redemption": "#dc3545"},
     )
     pie_chart_html = pio.to_html(pie_fig, full_html=False)
 
     # Calculate statistics
     stats = {
-        'avg_transaction': df['Amount'].mean(),
-        'max_transaction': df['Amount'].max(),
-        'total_transactions': len(df),
-        'daily_average': df.groupby('Date')['Amount'].sum().mean()
+        "avg_transaction": df["Amount"].mean(),
+        "max_transaction": df["Amount"].max(),
+        "total_transactions": len(df),
+        "daily_average": df.groupby("Date")["Amount"].sum().mean(),
     }
 
     return render_template(
@@ -464,62 +450,69 @@ def dashboard():
         total_earned=total_earned,
         total_redeemed=total_redeemed,
         net_transactions=net_transactions,
-        stats=stats
+        stats=stats,
     )
 
 
-
-#api call for weather app
+# api call for weather app
 @app.route("/weather", methods=["GET", "POST"])
 @require_login
 def weather():
     user_id = session.get("user_id")
     user = sql.session.query(User).filter_by(id=user_id).first()
     weather_data = None
-    
+
     if request.method == "POST":
         try:
             city = request.form.get("city")
             #  OpenMeteo Geocoding API to fetch the coordinates so when user enter location automatically the coordinates are added
-            geocoding_url = f"https://geocoding-api.open-meteo.com/v1/search?name={city}&count=1&language=en&format=json"
+            geocoding_url = (
+                f"https://geocoding-api.open-meteo.com/v1/search?name={city}&count=1&language=en&format=json"
+            )
             location = requests.get(geocoding_url).json()
-            
-            if 'results' in location and location['results']:
-                lat = location['results'][0]['latitude']
-                lon = location['results'][0]['longitude']
-                
+
+            if "results" in location and location["results"]:
+                lat = location["results"][0]["latitude"]
+                lon = location["results"][0]["longitude"]
+
                 # Get weather data
                 om = openmeteo_requests.Client()
                 params = {
                     "latitude": lat,
                     "longitude": lon,
                     "hourly": ["temperature_2m", "precipitation", "wind_speed_10m"],
-                    "current": ["temperature_2m", "relative_humidity_2m"]
+                    "current": ["temperature_2m", "relative_humidity_2m"],
                 }
-                
+
                 responses = om.weather_api("https://api.open-meteo.com/v1/forecast", params=params)
                 response = responses[0]
-                
+
                 # Get current weather data
                 current = response.Current()
                 current_variables = list(map(lambda i: current.Variables(i), range(0, current.VariablesLength())))
-                current_temperature_2m = next(filter(lambda x: x.Variable() == Variable.temperature and x.Altitude() == 2, current_variables))
-                current_relative_humidity_2m = next(filter(lambda x: x.Variable() == Variable.relative_humidity and x.Altitude() == 2, current_variables))
-                
+                current_temperature_2m = next(
+                    filter(lambda x: x.Variable() == Variable.temperature and x.Altitude() == 2, current_variables)
+                )
+                current_relative_humidity_2m = next(
+                    filter(
+                        lambda x: x.Variable() == Variable.relative_humidity and x.Altitude() == 2, current_variables
+                    )
+                )
+
                 weather_data = {
-                    'city': city,
-                    'temperature': current_temperature_2m.Value(),
-                    'humidity': current_relative_humidity_2m.Value(),
-                    'timezone': response.Timezone()
+                    "city": city,
+                    "temperature": current_temperature_2m.Value(),
+                    "humidity": current_relative_humidity_2m.Value(),
+                    "timezone": response.Timezone(),
                 }
-                
+
                 flash("Weather data retrieved successfully!", "success")
             else:
                 flash("City not found!", "danger")
-                
+
         except Exception as e:
             flash(f"Error getting weather data: {str(e)}", "danger")
-    
+
     return render_template("weather.html", user=user, weather=weather_data)
 
 
@@ -552,8 +545,8 @@ def home_news():
 #entire news section page 
 @app.route('/news')
 def news():
-    newsapi = NewsApiClient(api_key='9b8cdb155e0241bf8a3769991f8aa210')
-    
+    newsapi = NewsApiClient(api_key="9b8cdb155e0241bf8a3769991f8aa210")
+
     try:
         environmental_news = newsapi.get_everything(
             q='(climate change OR global warming OR environmental OR sustainability OR '
@@ -567,9 +560,9 @@ def news():
                    'scientificamerican.com,nature.com,sciencedaily.com,'
                    'theconversation.com,sciencenews.org'
         )
-        articles = environmental_news['articles']
+        articles = environmental_news["articles"]
     except Exception as e:
         print(f"Error fetching news: {e}")
         articles = []
-    
-    return render_template('news.html', articles=articles)
+
+    return render_template("news.html", articles=articles)

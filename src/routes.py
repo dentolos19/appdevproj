@@ -61,45 +61,6 @@ def home():
     return render_template("home.html", GOOGLE_API_KEY=GOOGLE_API_KEY)
 
 
-@app.route("/profile")
-@require_login
-def profile():
-    user_id = session.get("user_id")
-    user = sql.session.query(User).filter(User.id == user_id).first()
-
-    events = sql.session.query(Event).join(EventAttendee).filter(EventAttendee.user_id == user_id).all()
-
-    if not user:
-        return "User not found", 404
-
-    return render_template("profile.html", user=user, events=events)
-
-
-@app.route("/edit_profile", methods=["GET", "POST"])
-@require_login
-def edit_profile():
-    user_id = session.get("user_id")
-    user = sql.session.query(User).filter(User.id == user_id).first()
-
-    if request.method == "POST":
-        user.email = request.form["email"]
-        user.name = request.form["name"]
-        user.bio = request.form["bio"]
-        user.birthday = request.form["birthday"]
-        user.security = request.form["security"]  # Update security question
-
-        try:
-            sql.session.commit()
-            flash("Profile updated successfully!", "success")
-            return redirect("/profile")
-        except Exception as e:
-            if "unique constraint" in str(e).lower():
-                flash("Error! Email already exists.", "danger")
-            sql.session.rollback()
-
-    return render_template("edit-profile.html", user=user)
-
-
 @app.route("/events")
 @require_login
 def events():
@@ -168,21 +129,22 @@ def event_info():
         weather_data = get_weather_data(location)
 
         if weather_data:
-            rain_chance = weather_data['rain_chance']
-            temperature = weather_data['temperature']
-            weather_description = weather_data['weather_description']
+            rain_chance = weather_data["rain_chance"]
+            temperature = weather_data["temperature"]
+            weather_description = weather_data["weather_description"]
         else:
             rain_chance = None
             temperature = None
             weather_description = "Weather data unavailable"
 
-
-    return render_template("event-details.html",
-                           event=event,
-                           rain_chance=rain_chance,
-                           temperature=temperature,
-                           weather_description=weather_description,
-                           attendee_num=attendee_num)
+    return render_template(
+        "event-details.html",
+        event=event,
+        rain_chance=rain_chance,
+        temperature=temperature,
+        weather_description=weather_description,
+        attendee_num=attendee_num,
+    )
 
 
 @app.route("/event/signup", methods=["GET", "POST"])
@@ -250,3 +212,4 @@ from routing.community import *
 from routing.engagement import *
 from routing.messaging import *
 from routing.messaging_api import *
+from routing.profile import *

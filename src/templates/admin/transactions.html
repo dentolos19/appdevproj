@@ -1,39 +1,52 @@
 {% extends "admin/base.html" %}
 
 {% block abody %}
-<div class="container my-4">
-  <!-- Header -->
-  <div>
-    <h3 class="m-0">Transactions ({{ transactions.__len__() }})</h3>
-  </div>
-
-  <!-- Items -->
-  <div class="mt-4 vstack gap-2">
-    {% for transaction in transactions %}
-    <div class="card">
-      <div class="card-body d-flex justify-content-between align-items-center">
-        <div>
-          <h5 class="card-title">{{ transaction.description }}</h5>
-          <p class="card-subtitle text-body-secondary">
-            <span>
-              <i class="fa-solid fa-user fa-sm"></i>
-              By: {{ transaction.user.name }}
-            </span>
-            <span class="mx-1">&bullet;</span>
-            <span>
-              <i class="fa-solid fa-calendar fa-sm"></i>
-              {{ transaction.created_at }}
-            </span>
-          </p>
-        </div>
-        <div>
-          <a class="btn btn-primary" href="{{ url_for('admin_transactions_view', id=transaction.id) }}">View</a>
-          <a class="btn btn-danger" href="{{ url_for('admin_transactions_delete', id=transaction.id) }}">Delete</a>
-        </div>
+<div class="container-fluid py-3">
+  <div class="card">
+    <!-- Header -->
+    <div class="card-body d-flex justify-content-between align-items-center">
+      <div>
+        <h4 class="card-title m-0">
+          <span>Transactions</span>
+          <span class="badge text-bg-secondary">{{ len(transactions) }}</span>
+        </h4>
       </div>
     </div>
-    {% endfor %}
-  </div>
 
+    <!-- Content -->
+    <div class="list-group list-group-flush">
+      {% if transactions %}
+      {% for transaction in transactions %}
+      <div class="list-group-item">
+        <div class="py-2 d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="m-0">{{ transaction.description }}</h5>
+            <p class="text-body-secondary m-0">
+              <span>
+                <i class="fa-solid fa-user fa-sm"></i>
+                By: {{ transaction.user.name }}
+              </span>
+              <span class="mx-1">&bullet;</span>
+              <span>
+                <i class="fa-solid fa-calendar fa-sm"></i>
+                {{ transaction.created_at }}
+              </span>
+            </p>
+          </div>
+          <div class="btn-group">
+            <a class="btn btn-primary" href="{{ url_for('admin_transactions_view', id=transaction.id) }}">View</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="list-group-item">
+        <div class="py-2 d-flex justify-content-center align-items-center">
+          <p class="text-body-secondary m-0">No transactions found</p>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
 </div>
 {% endblock %}
